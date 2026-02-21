@@ -2,12 +2,14 @@
 
 import './App.css'
 import HomePage from './pages/HomePage'
-
+import { AudioProvider } from './providers/AudioContextProvider'
 function App() {
 
 
   return (
-    <HomePage />
+    <AudioProvider>
+      <HomePage />
+    </AudioProvider>
   )
 }
 
