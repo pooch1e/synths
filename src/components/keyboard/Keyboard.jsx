@@ -1,23 +1,32 @@
 import { useAudio } from "../../providers/AudioContextProvider"
+
 import Key from "./Key"
+import ADSR from "../modules/ADSR"
+
 import { startOsc, stopOsc } from "../../utils/startOsc"
 import { useRef, useState } from "react"
+
 
 export default function Keyboard() {
   const { initAudio } = useAudio()
   const activeNoteRef = useRef(null)
   const [octaveShift, setOctaveShift] = useState(0)
+  const adsrRef = useRef({ attack: 0, decay: 0, sustain: 100, release: 0 })
+
+  function handleAdsrChange(param, value) {
+    adsrRef.current = { ...adsrRef.current, [param]: value }
+  }
 
   function playFrequency(frequency) {
     const ctx = initAudio()
-    const { osc, gainNode } = startOsc(ctx, frequency)
+    const { osc, gainNode } = startOsc(ctx, frequency, adsrRef.current)
     activeNoteRef.current = { osc, gainNode, ctx }
   }
 
   function stopFrequency() {
     if (activeNoteRef.current) {
       const { osc, gainNode, ctx } = activeNoteRef.current
-      stopOsc(gainNode, ctx, osc)
+      stopOsc(gainNode, ctx, osc, adsrRef.current.release)
       activeNoteRef.current = null
     }
   }
@@ -64,6 +73,8 @@ export default function Keyboard() {
           Down
         </button>
       </div>
+      {/* will pass adsr here - or in seperate component */}
+      <ADSR onChange={handleAdsrChange} />
       <div className="flex flex-row p-2 border-2 justify-center">
         {notes.map((note) => {
           return <Key key={note.note} note={note.note} frequency={note.frequency} onPlay={playFrequency} onStop={stopFrequency} />

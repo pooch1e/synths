@@ -1,19 +1,31 @@
-export function startOsc(ctx, frequency) {
+export function startOsc(ctx, frequency, adsr) {
   const osc = ctx.createOscillator();
   const gainNode = ctx.createGain();
-  
+
+  const now = ctx.currentTime;
+  const attack = adsr.attack;
+  const decay = adsr.decay;
+  const sustain = adsr.sustain / 100; // convert 0-100 to 0-1
+
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(frequency, ctx.currentTime);
-  gainNode.gain.setValueAtTime(1, ctx.currentTime);
-  
+  osc.frequency.setValueAtTime(frequency, now);
+
+  // ADSR envelope: Attack → Decay → Sustain
+  gainNode.gain.setValueAtTime(0, now);
+  gainNode.gain.linearRampToValueAtTime(1, now + attack);
+  gainNode.gain.linearRampToValueAtTime(sustain, now + attack + decay);
+
   osc.connect(gainNode);
   gainNode.connect(ctx.destination);
   osc.start();
-  
+
   return { osc, gainNode };
 }
 
-export function stopOsc(gainNode, ctx, osc) {
-  gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.015);
-  osc.stop(ctx.currentTime + 0.075);
+export function stopOsc(gainNode, ctx, osc, release) {
+  const now = ctx.currentTime;
+  gainNode.gain.cancelScheduledValues(now);
+  gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+  gainNode.gain.linearRampToValueAtTime(0, now + release);
+  osc.stop(now + release + 0.01);
 }
