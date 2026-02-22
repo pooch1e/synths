@@ -1,22 +1,24 @@
 import { useAudio } from "../../providers/AudioContextProvider"
 import Key from "./Key"
-
+import { startOsc, stopOsc } from "../../utils/startOsc"
+import { useRef } from "react"
 
 export default function Keyboard() {
   const { initAudio } = useAudio()
+  const activeNoteRef = useRef(null)
 
   function playFrequency(frequency) {
     const ctx = initAudio()
-    const oscillator = ctx.createOscillator()
-    oscillator.type = "sine"
-    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime)
-    oscillator.connect(ctx.destination)
-    oscillator.start()
-    
+    const { osc, gainNode } = startOsc(ctx, frequency)
+    activeNoteRef.current = { osc, gainNode, ctx }
   }
 
-  function stopFrequency(mouseUpEvent) {
-
+  function stopFrequency() {
+    if (activeNoteRef.current) {
+      const { osc, gainNode, ctx } = activeNoteRef.current
+      stopOsc(gainNode, ctx, osc)
+      activeNoteRef.current = null
+    }
   }
 
   const notes = [
@@ -42,8 +44,7 @@ export default function Keyboard() {
     <div className="grid grid-cols-1 gap-2 border-2 p-2 w-full ">
       <div className="flex flex-row p-2 border-2 justify-center">
         {notes.map((note) => {
-          return <Key key={note.note} frequency={note.frequency} onPlay={playFrequency} />
-
+          return <Key key={note.note} frequency={note.frequency} onPlay={playFrequency} onStop={stopFrequency} />
         })}
       </div>
 
