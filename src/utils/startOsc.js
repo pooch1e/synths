@@ -1,13 +1,13 @@
-export function startOsc(ctx, frequency, adsr) {
+export function startOsc(ctx, frequency, adsr, oscType = 'sine') {
   const osc = ctx.createOscillator();
   const gainNode = ctx.createGain();
 
   const now = ctx.currentTime;
   const attack = adsr.attack;
   const decay = adsr.decay;
-  const sustain = adsr.sustain / 100; // convert 0-100 to 0-1
+  const sustain = adsr.sustain / 100; 
 
-  osc.type = 'sine';
+  osc.type = oscType;
   osc.frequency.setValueAtTime(frequency, now);
 
   // ADSR envelope: Attack → Decay → Sustain
